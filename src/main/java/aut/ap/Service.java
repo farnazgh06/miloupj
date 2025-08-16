@@ -76,6 +76,24 @@ public class Service {
 
     public Email sendEmail(String senderEmail, String recipients, String subject, String body) {
         return sessionFactory.fromTransaction(session -> {
+            if (body == null || body.trim().isEmpty()) {
+                System.out.println("The email body cannot be empty.");
+                return null;
+            }
+
+            String[] recipientAccs = recipients.split(",\\s*");
+            for (String recipientAcc : recipientAccs) {
+                List<User> existingUser = session.createNativeQuery(
+                                "SELECT * FROM app_user WHERE email = :email", User.class)
+                        .setParameter("email", checkEmail(recipientAcc))
+                        .getResultList();
+
+                if (existingUser.isEmpty()) {
+                    System.out.println("you cant milou " + recipientAcc + "." + "\n this account doent exist.");
+                    return null;
+                }
+            }
+
             Email newEmail = new Email(generateCode(), senderEmail, recipients, subject, body, LocalDateTime.now());
             session.persist(newEmail);
             return newEmail;
@@ -150,13 +168,17 @@ public class Service {
                 Email email = emails.get(0);
                 String[] recipients = email.getRecipients().split(",\\s*");
 
-                if (email.getSenderEmail().equals(currentUserEmail)) {
-                    if (!email.isRead()) {
+                boolean isSender = email.getSenderEmail().equals(currentUserEmail);
+                boolean isRecipient = Arrays.asList(recipients).contains(currentUserEmail);
+
+                if (isSender || isRecipient) {
+                    if (isRecipient && !email.isRead()) {
                         email.setRead(true);
                         session.merge(email);
                     }
                     return email;
                 } else {
+                    System.out.println("You cant read this milou");
                     return null;
                 }
             }
