@@ -86,7 +86,7 @@ public class Main {
                         System.out.println("Milou sent successfully!");
                         System.out.println("Code: " + newEmail.getCode());
                     } else {
-                        System.out.println("Failed. try again!");
+                        System.out.println("try again!");
                     }
                     break;
                 case "V":
